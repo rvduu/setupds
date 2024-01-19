@@ -1,0 +1,25 @@
+---
+- name: create pwd file
+  template: src=pwdfile.j2 dest=/root/scripts/pwdfile owner=root group=root mode=0600
+
+- name: create noise file
+  command: dd if=/dev/urandom of=/root/scripts/noisefile bs=60 count=1 creates=/root/scripts/noisefile
+
+- name: deploy certadm.sh
+  template: src=certadm.sh.j2 dest=/root/scripts/certadm.sh owner=root group=root mode=0750
+
+- name: init cert db
+  command: /root/scripts/certadm.sh initdb creates=/root/certs/cert8.db
+
+- name: create ca entry
+  command: /root/scripts/certadm.sh createca creates=/root/certs/cacert.asc
+
+- name: create server certs
+  command: /root/scripts/certadm.sh createcerts creates=/root/certs/*.p12
+
+- name: create download dir
+  local_action:
+    module: file path={{ playbook_dir }}/tmp state=directory
+
+- name: copy cert files to local machine
+  synchronize: src=/root/certs dest={{ playbook_dir }}/tmp mode=pull

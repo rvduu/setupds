@@ -1,0 +1,9 @@
+[camaster]
+<host1> ansible_host=<host1_ip> replicaid=<1001>
+
+[masters]
+<host2> ansible_host=<host2_ip> replicaid=<1002>
+
+[slaves]
+<host3> ansible_host=<host3_ip>
+<host4> ansible_host=<host4_ip>

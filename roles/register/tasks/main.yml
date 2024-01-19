@@ -1,0 +1,15 @@
+---
+- name: register to RH customer portal
+  redhat_subscription:
+    consumer_name: "{{ systemname_prefix }}{{ ansible_hostname }}"
+    autosubscribe: no
+    password: "{{ portal_password }}"
+    username: "{{ portal_username }}"
+    state: present
+  notify: 
+    - add subscription
+    - disable all repos
+    - enable RHEL + RHDS9 repos
+    - enable RHEL + RHDS10 repos
+
+- meta: flush_handlers

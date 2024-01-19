@@ -1,0 +1,32 @@
+---
+- name: Register and install RHDS
+  hosts: all 
+
+  roles:
+    - register
+    - install
+    - setupslapdadmin
+
+
+- name: Create CA master and certs
+  hosts: camaster
+
+  roles:
+    - certificates
+
+
+- name: Deploy certs, enable SSL, add changelog and replicaid
+  hosts: all
+
+  roles:
+    - enablessl
+    - changelog
+    - replicaid
+
+
+- name: Initiate replication from CA Master and cleanup
+  hosts: camaster
+
+  roles:
+    - replication
+    - cleanup

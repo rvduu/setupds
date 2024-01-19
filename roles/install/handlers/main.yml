@@ -1,0 +1,6 @@
+---
+- name: save iptables
+  shell: iptables-save > /etc/sysconfig/iptables
+
+- name: restart firewalld
+  service: name=firewalld state=restarted

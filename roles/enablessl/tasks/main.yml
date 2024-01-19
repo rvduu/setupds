@@ -1,0 +1,83 @@
+---
+- name: copy cert files to dirsrv
+  copy: src={{playbook_dir }}/tmp/certs/{{ item }} dest=/etc/dirsrv/slapd-{{ instance }}/{{ item }} mode=0660 owner=dirsrv group=dirsrv force=no
+  with_items:
+  - cacert.asc
+  - cert8.db
+  - key3.db
+  - secmod.db
+  - "{{ ansible_hostname }}.p12"
+
+- name: copy ca cert
+  copy: src={{playbook_dir }}/tmp/certs/cacert.asc dest=/etc/dirsrv/slapd-{{ instance }}/cacert.asc mode=0644 owner=root group=root
+
+- name: create pin.txt
+  template: src=pin.txt.j2 dest=/etc/dirsrv/slapd-{{ instance }}/pin.txt mode=0400 owner=root group=root
+
+- name: copy cert files to dirsrv-admin
+  copy: src={{playbook_dir }}/tmp/certs/{{ item }} dest=/etc/dirsrv/admin-serv/{{ item }} mode=0660 owner=dirsrv group=dirsrv force=no
+  with_items:
+  - cert8.db
+  - key3.db
+  - secmod.db
+
+- name: create password.conf
+  template: src=password.conf.j2 dest=/etc/dirsrv/admin-serv/password.conf mode=0400 owner=dirsrv group=root
+
+- name: copy enable-ssl.ldif
+  template: src=enable-ssl.ldif.j2 dest=/root/scripts/enable-ssl.ldif
+
+- name: enable ssl
+  shell: ldapmodify -x -H ldap://127.0.0.1/ -D "cn=Directory Manager" -w "{{ dmpasswd }}" -f /root/scripts/enable-ssl.ldif && touch /root/scripts/enable-ssl.ldif.done creates=/root/scripts/enable-ssl.ldif.done
+  notify:
+    - restart dirsrv
+    - restart dirsrv.target
+
+- name: disable TLS_CACERTDIR in ldap.conf
+  lineinfile: dest=/etc/openldap/ldap.conf regexp="^(TLS_CACERTDIR.*$)" line="#\1" backrefs=yes
+
+- name: set BASE in ldap.conf
+  lineinfile: dest=/etc/openldap/ldap.conf line="BASE {{ suffix }}" state=present
+
+- name: set URI in ldap.conf
+  lineinfile: dest=/etc/openldap/ldap.conf line="URI ldaps://{{ ansible_hostname }}.{{ domainname }}/" state=present
+
+- name: set TLS_CACERT in ldap.conf
+  lineinfile: dest=/etc/openldap/ldap.conf line="TLS_CACERT /etc/dirsrv/slapd-{{ instance }}/cacert.asc" state=present
+
+- name: set NSSPassPhraseDialog in nss.conf
+  lineinfile: dest=/etc/dirsrv/admin-serv/nss.conf regexp="^NSSPassPhraseDialog.*$" line="NSSPassPhraseDialog  file://etc/dirsrv/admin-serv/password.conf" state=present
+  notify: restart dirsrv-admin
+
+- name: set NSSNickname in console.conf
+  lineinfile: dest=/etc/dirsrv/admin-serv/console.conf regexp="^NSSNickname.*$" line="NSSNickname {{ ansible_hostname}}.{{ domainname }}" state=present
+  notify: restart dirsrv-admin
+
+- name: set NSSEngine in console.conf
+  lineinfile: dest=/etc/dirsrv/admin-serv/console.conf regexp="^NSSEngine.*$" line="NSSEngine on" state=present
+  notify: restart dirsrv-admin
+
+- name: set ldapurl in adm.conf
+  lineinfile:
+    dest: /etc/dirsrv/admin-serv/adm.conf
+    regexp: "^ldapurl.*$"
+    line: "ldapurl: ldaps://{{ ansible_hostname }}.{{ domainname }}"
+    state: present
+  notify: restart dirsrv-admin
+
+- name: copy enable-ssl-admin.ldif
+  template: src=enable-ssl-admin.ldif.j2 dest=/root/scripts/enable-ssl-admin.ldif
+
+- name: enable ssl in admin-serv
+  shell: ldapmodify -x -H ldap://127.0.0.1/ -D "cn=Directory Manager" -w "{{ dmpasswd }}" -f /root/scripts/enable-ssl-admin.ldif && touch /root/scripts/enable-ssl-admin.ldif.done creates=/root/scripts/enable-ssl-admin.ldif.done
+  notify: restart dirsrv-admin
+
+# Create nss db with the CA for the console
+- name: create .redhat-idm-console directory
+  file: path=/root/.redhat-idm-console state=directory mode=0750
+
+- name: initialize db
+  command: certutil -d /root/.redhat-idm-console -N --empty-password creates=/root/.redhat-idm-console/cert8.db
+
+- name: import CA cert
+  shell: certutil -d /root/.redhat-idm-console -A -n "CA certificate" -t CT,, -a -i /etc/dirsrv/slapd-{{ instance }}/cacert.asc && touch /root/.redhat-idm-console/.certimported creates=/root/.redhat-idm-console/.certimported

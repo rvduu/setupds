@@ -1,0 +1,6 @@
+---
+  - name: copy addreplica.ldif
+    template: src=addreplica.ldif.j2 dest=/root/scripts/addreplica.ldif
+
+  - name: add replica
+    shell: ldapmodify -x -H ldap://127.0.0.1/ -D "cn=Directory Manager" -w "{{ dmpasswd }}" -f /root/scripts/addreplica.ldif && touch /root/scripts/addreplica.ldif.done creates=/root/scripts/addreplica.ldif.done

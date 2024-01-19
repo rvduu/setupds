@@ -1,0 +1,14 @@
+---
+- name: add subscription
+  command: subscription-manager attach --pool {{ poolid }}
+
+- name: disable all repos
+  command: subscription-manager repos --disable '*'
+
+- name: enable RHEL + RHDS9 repos
+  command: subscription-manager repos --enable rhel-6-server-rpms --enable rhel-server-6-rhds-9-rpms
+  when: ansible_distribution_major_version == "6"
+
+- name: enable RHEL + RHDS10 repos
+  command: subscription-manager repos --enable rhel-7-server-rpms --enable rhel-7-server-rhds-10-rpms
+  when: ansible_distribution_major_version == "7"

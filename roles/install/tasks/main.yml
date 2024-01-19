@@ -1,0 +1,66 @@
+---
+- name: install base group
+  yum: name=@base state=present
+
+- name: install openjdk
+  yum: name=java-1.6.0-openjdk state=present
+  when: ansible_distribution_major_version == "6"
+
+- name: install RHDS
+  yum: name={{item}}
+  with_items:
+    - redhat-ds
+    - xorg-x11-xauth
+    - dejavu*
+
+- name: Create dirsrv group
+  group: name=dirsrv gid=389 state=present
+  when: ansible_distribution_major_version == "6"
+
+- name: create dirsrv user
+  user: name=dirsrv comment="389-ds-base" createhome=no group=dirsrv home=/usr/share/dirsrv shell=/sbin/nologin uid=389 state=present
+  when: ansible_distribution_major_version == "6"
+
+- name: set file descriptors for RHDS
+  copy: src=99-rhds.conf dest=/etc/security/limits.d/99-rhds.conf owner=root group=root mode=0644
+  when: ansible_distribution_major_version == "6"
+
+- name: set file descriptors for RHDS
+  lineinfile: dest=/etc/sysconfig/dirsrv.systemd insertafter=EOF line="LimitNOFILE=8192" state=present
+  when: ansible_distribution_major_version == "7"
+
+- name: allow established traffic in iptables
+  iptables: chain=INPUT ctstate=ESTABLISHED,RELATED jump=ACCEPT
+  notify: save iptables
+  when: ansible_distribution_major_version == "6"
+
+- name: allow connections from localhost
+  iptables: chain=INPUT in_interface=lo jump=ACCEPT
+  notify: save iptables
+  when: ansible_distribution_major_version == "6"
+
+- name: allow SSH and RHDS traffic
+  iptables: action=append chain=INPUT destination_port={{item}} protocol=tcp jump=ACCEPT
+  with_items:
+    - 22
+    - 389
+    - 636
+    - 9830
+  notify: save iptables
+  when: ansible_distribution_major_version == "6"
+
+- name: set default iptables policy for INPUT chain
+  iptables: chain=INPUT policy=DROP
+  notify: save iptables
+  when: ansible_distribution_major_version == "6"
+
+- name: configure firewall
+  firewalld: port={{item}} permanent=true state=enabled
+  with_items:
+    - 389/tcp
+    - 636/tcp
+    - 9830/tcp
+  notify: restart firewalld
+  when: ansible_distribution_major_version == "7"
+
+- meta: flush_handlers

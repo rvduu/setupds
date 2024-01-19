@@ -1,0 +1,11 @@
+---
+- name: restart dirsrv
+  service: name=dirsrv state=restarted
+  when: ansible_distribution_major_version == "6"
+
+- name: restart dirsrv.target
+  service: name=dirsrv.target state=restarted
+  when: ansible_distribution_major_version == "7"
+
+- name: restart dirsrv-admin
+  service: name=dirsrv-admin state=restarted

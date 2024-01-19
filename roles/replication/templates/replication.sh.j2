@@ -1,0 +1,42 @@
+#!/bin/bash
+set -x
+
+{% for agreement in agreements %}
+
+# Configure replication agreement: {{ replication[agreement].cn }}
+ldapmodify -x -H ldaps://{{ replication[agreement].from }}/ -D "cn=Directory Manager" -w {{ dmpasswd }} <<-EOF
+	dn: cn={{ replication[agreement].cn }},cn=replica,cn="dc=local,dc=redhat,dc=com",cn=mapping tree,cn=config
+	changetype: add
+	objectclass: top
+	objectclass: nsDS5ReplicationAgreement
+	cn: {{ replication[agreement].cn }}
+	nsDS5ReplicaHost: {{ replication[agreement].to }}
+	nsDS5ReplicaRoot: dc=local,dc=redhat,dc=com
+	nsDS5ReplicaPort: 636
+	nsDS5ReplicaTransportInfo: SSL
+	nsDS5ReplicaBindDN: cn=repman,cn=config
+	nsDS5ReplicaBindMethod: simple
+	nsDS5ReplicaCredentials: {{ dmpasswd }}
+	nsDS5ReplicaTimeOut: 120
+{% if replication[agreement].init is defined %}
+	nsds5BeginReplicaRefresh: start
+	EOF
+
+# If the agreements dictates an init, wait for the initial replication to finish
+while :
+do
+	sleep 5
+	ldapsearch -LLL x -H ldaps://{{ replication[agreement].from }}/ -D "cn=Directory Manager" -w {{ dmpasswd }} \
+		-b cn=config cn={{ replication[agreement].cn }} nsds5BeginReplicaRefresh | 
+		grep nsds5BeginReplicaRefresh
+	if [ $? -gt 0 ]
+	then
+		break
+	fi
+done
+{% else %}
+	EOF
+{% endif %}
+sleep 5
+
+{% endfor %}

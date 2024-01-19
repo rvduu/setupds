@@ -1,0 +1,6 @@
+---
+  - name: copy addchangelog.ldif
+    template: src=addchangelog.ldif.j2 dest=/root/scripts/addchangelog.ldif
+
+  - name: add changelog
+    shell: ldapmodify -x -H ldap://127.0.0.1/ -D "cn=Directory Manager" -w "{{ dmpasswd }}" -f /root/scripts/addchangelog.ldif && touch /root/scripts/addchangelog.ldif.done creates=/root/scripts/addchangelog.ldif.done

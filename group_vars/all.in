@@ -1,0 +1,76 @@
+---
+ansible_user: root
+portal_username: <rh_portal_user_name>
+portal_password: <rh_portal_password>
+systemname_prefix: <registered_name_prefix>
+domainname: <domain_name>
+dmpasswd: "<directory_manager_password>"
+instance: "<instance_name>"
+suffix: "<suffix>"
+poolid: <pool_id_for sub_to_attach>
+
+# Example replication setup:
+# 
+# 
+#     +---------+        +---------+
+#     | <host1> |        | <host2> |
+#     |         |[1]---->|         |
+#     | CA      |<----[2]| master  |
+#     | master  |        |         |
+#     |         |        |         |
+#     +---------+        +---------+
+#      [3]   [4]          [5]   [6]
+#       |      \          /      |
+#       |       \        /       |
+#       |        \      /        |
+#       |         \    /         |
+#       |          \  /          |
+#       |           \/           |
+#       |           /\           |
+#       |          /  \          |
+#       |         /    \         |
+#       |        /      \        |
+#       |       /        \       |
+#       |      /          \      |
+#       V     V            V     V
+#     +---------+        +---------+
+#     | <host3> |        | <host4> |
+#     |         |        |         |
+#     | slave   |        | slave   |
+#     |         |        |         |
+#     |         |        |         |
+#     +---------+        +---------+
+#
+
+# Define replication agreements
+# All agreements should be added to the agreements array for sorting purposes
+agreements: [1, 2, 3, 4, 5 ,6]
+
+replication:
+  1:
+    from: <host1.example.com>
+    to: <host2.example.com>
+    cn: me-to-host2
+    init: yes
+  2:
+    from: <host2.example.com
+    to: <host1.example.com
+    cn: me-to-host1
+  3:
+    from: <host1.example.com>
+    to: <host3.example.com>
+    cn: me-to-host3
+    init: yes
+  4:
+    from: <host1.example.com>
+    to: <host4.example.com>
+    cn: me-to-host4
+    init: yes
+  5:
+    from: <host2.example.com>
+    to: <host3.example.com>
+    cn: me-to-host3
+  6:
+    from: <host2.example.com>
+    to: <host4.example.com>
+    cn: me-to-host4

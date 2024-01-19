@@ -1,0 +1,9 @@
+dn: cn=slapd-{{ instance }},cn=Red Hat Directory Server,cn=Server Group,cn={{ ansible_hostname }}.{{ domainname }},ou={{ domainname }},o=NetscapeRoot
+changetype: modify
+replace: nsServerSecurity
+nsServerSecurity: on
+
+dn: cn=configuration,cn=admin-serv-{{ ansible_hostname }},cn=Red Hat Administration Server,cn=Server Group,cn={{ ansible_hostname }}.{{ domainname }},ou={{ domainname }},o=NetscapeRoot
+changetype: modify
+replace: nsServerSecurity
+nsServerSecurity: on

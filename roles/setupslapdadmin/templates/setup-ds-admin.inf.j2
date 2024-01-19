@@ -1,0 +1,29 @@
+[General] 
+FullMachineName = {{ ansible_hostname }}.{{ domainname }}
+SuiteSpotGroup = dirsrv
+SuiteSpotUserID = dirsrv
+AdminDomain = {{ domainname }}
+ConfigDirectoryAdminID = admin 
+ConfigDirectoryAdminPwd = {{ dmpasswd }}
+ConfigDirectoryLdapURL = ldap://{{ ansible_hostname }}.{{ domainname }}:389/o=NetscapeRoot 
+
+[slapd] 
+AddOrgEntries = Yes
+AddSampleEntries = No
+SlapdConfigForMC = Yes 
+UseExistingMC = 0 
+ServerPort = 389 
+ServerIdentifier = {{ instance }}
+Suffix = {{ suffix }}
+RootDN = cn=Directory Manager 
+RootDNPwd = {{ dmpasswd }}
+ds_bename = userRoot
+InstScriptsEnabled = true
+
+[admin] 
+Port = 9830
+{% if ansible_distribution_major_version == "7" %}SysUser = dirsrv
+{% endif %}
+ServerIpAddress = 0.0.0.0
+ServerAdminID = admin 
+ServerAdminPwd = {{ dmpasswd }}

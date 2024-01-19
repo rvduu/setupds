@@ -1,0 +1,32 @@
+#!/bin/bash
+
+if [ "$#" -lt 1 ]
+then
+	echo "Wrong parameters!"
+	exit 127
+fi
+
+serial=1001 # certificate serial#
+
+case $1 in
+initdb)		mkdir /root/certs
+		certutil -N -d /root/certs -f /root/scripts/pwdfile
+		;;
+createca)	certutil -d /root/certs -z /root/scripts/noisefile -S -n "CA certificate" -s "cn=Local CA,{{ suffix }}" -2 -x -t "CT,," -m 1000 -v 120 -k rsa -f /root/scripts/pwdfile <<-EOF
+		y
+		
+		
+		EOF
+		certutil -d /root/certs -L -n "CA certificate" -a > /root/certs/cacert.asc
+		;;
+createcerts)	{% for host in groups['all'] %}
+		
+		certutil -d /root/certs -z /root/scripts/noisefile -S -n "{{ host }}.{{ domainname }}" \
+			-s "cn={{ host }}.{{ domainname }}" -c "CA certificate" \
+			-t "u,u,u" -m ${serial} -v 120 -k rsa -f /root/scripts/pwdfile
+		pk12util -d /root/certs -o /root/certs/{{ host }}.p12 -n "{{ host }}.{{ domainname }}" -w /root/scripts/pwdfile -k /root/scripts/pwdfile
+		(( serial++ ))
+
+		{% endfor %}
+
+esac

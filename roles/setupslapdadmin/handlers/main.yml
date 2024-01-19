@@ -1,0 +1,22 @@
+---
+- name: enable dirsrv
+  service: name=dirsrv enabled=yes state=restarted
+  when: ansible_distribution_major_version == "6"
+
+- name: enable dirsrv.target
+  service: name=dirsrv.target enabled=yes state=restarted
+  when: ansible_distribution_major_version == "7"
+
+- name: enable dirsrv-admin
+  service: name=dirsrv-admin enabled=yes state=restarted
+
+# Certificate db will be recreated later
+- name: remove cert db
+  file: path={{ item }} state=absent
+  with_items:
+  - /etc/dirsrv/slapd-{{ instance }}/cert8.db
+  - /etc/dirsrv/slapd-{{ instance }}/key3.db
+  - /etc/dirsrv/slapd-{{ instance }}/secmod.db
+  - /etc/dirsrv/admin-serv/cert8.db
+  - /etc/dirsrv/admin-serv/key3.db
+  - /etc/dirsrv/admin-serv/secmod.db

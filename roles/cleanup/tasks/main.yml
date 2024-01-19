@@ -1,0 +1,3 @@
+- name: cleanup local tmp dir
+  local_action:
+    module: file path={{ playbook_dir }}/tmp state=absent

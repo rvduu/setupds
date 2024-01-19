@@ -1,0 +1,12 @@
+dn: cn=replica,cn="{{ suffix }}",cn=mapping tree,cn=config
+changetype: add
+objectclass: top
+objectclass: nsDS5Replica
+cn: replica
+nsDS5ReplicaId: {{ replicaid }}
+nsDS5ReplicaRoot: {{ suffix }}
+nsDS5Flags: {{replicaflags }}
+nsDS5ReplicaBindDN: cn=repman,cn=config
+nsds5ReplicaPurgeDelay: 604800
+nsds5ReplicaLegacyConsumer: off
+nsDS5ReplicaType: {{ replicatype }}

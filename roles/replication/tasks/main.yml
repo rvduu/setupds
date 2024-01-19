@@ -1,0 +1,6 @@
+---
+- name: copy replication.sh
+  template: src=replication.sh.j2 dest=/root/scripts/replication.sh owner=root group=root mode=0750
+
+- name: create replication agreements
+  shell: /root/scripts/replication.sh && touch /root/scripts/replication.sh.done creates=/root/scripts/replication.sh.done
